@@ -2,13 +2,16 @@
 
 #include <arpa/inet.h>
 #include <signal.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 
+#include "config.h"
+#include "INIReader.h"
+
 static struct event_base* evbase;
+static const std::string program_name = "panda";
 
 void killServer(void) {
 	fprintf(stderr, "Stopping socket listener event loop.\n");
@@ -185,9 +188,47 @@ static void listen_error_cb(struct evconnlistener *listener, void *ctx)
     event_base_loopexit(base, NULL);
 }
 
-int main(void) {
-    struct evconnlistener* listener;
+int create_listen_ports(Config config) {
     struct sockaddr_in sin;
+    struct evconnlistener* listener;
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = htonl(config.m_ip);
+    sin.sin_port = htons(config.m_port);
+
+    listener = evconnlistener_new_bind(evbase, listen_cb, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
+            -1, (struct sockaddr*)&sin, sizeof(sin));
+    if (!listener) {
+        log("Couldn't create listener");
+        return 1;
+    }
+    evconnlistener_set_error_cb(listener, listen_error_cb);
+
+    return 0;
+}
+
+void ParseConfig(Config* config) {
+    
+}
+
+int main(int argc, char* argv[]) {
+    std::string config_path;
+    Config config;
+
+    if (argc != 1) {
+        log("ERROR: invalid parameters\n");
+        return 1;
+    }
+
+    config_path = argv[1];
+    INIReader reader(config_path.c_str());
+    if (reader.ParseError() < 0) {
+        log("Error: open config file failed\n");
+        return 1;
+    }
+    
+    ParseConfig(&config);
 
     /* 
      * Set signal handlers
@@ -202,21 +243,8 @@ int main(void) {
         return 1;
     }
 
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    // FIXME: listen on 127.0.0.1
-    sin.sin_addr.s_addr = htonl(0);
-    sin.sin_port = htons(SERVER_PORT);
+    if (create_listen_ports())
 
-    listener = evconnlistener_new_bind(evbase, listen_cb, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
-            -1, (struct sockaddr*)&sin, sizeof(sin));
-    if (!listener) {
-        log("Couldn't create listener");
-        return 1;
-    }
-
-    evconnlistener_set_error_cb(listener, listen_error_cb);
     event_base_dispatch(evbase);
-
     return 0;
 }

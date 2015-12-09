@@ -9,6 +9,7 @@
 
 /* Port to listen on. */
 #define SERVER_PORT 21000
+#define SERVER_ADDR 127.0.0.1
 /* Connection backlog (# of backlogged connections to accept). */
 #define CONNECTION_BACKLOG 8
 /* Socket read and write timeouts, in seconds. */
@@ -24,7 +25,7 @@
 
 void listen_cb(struct evconnlistener *listener, evutil_socket_t fd,
         struct sockaddr *address, int socklen, void *ctx);
-static void listen_error_cb(struct evconnlistener *listener, void *ctx);
+void listen_error_cb(struct evconnlistener *listener, void *ctx);
 
 void read_cb(struct bufferevent *bev, void *ctx);
 void write_cb(struct bufferevent *bev, void *ctx);
