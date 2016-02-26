@@ -1,16 +1,25 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+#include "INIReader.h"
 
 class Config {
     public:
-        Config(const std::string config_path) {
-            m_reader = new INIReader(config_path.c_str());
+        Config(const char* config_path);
+        ~Config();
+
+        int ParseConfig();
+        std::string ip() {
+            return m_ip;
+        }
+
+        unsigned short port() {
+            return m_port;
         }
 
     private:
         std::string      m_ip;
         unsigned short   m_port;
-        INIReader m_reader;
+        INIReader* m_reader;
 };
 
 #endif

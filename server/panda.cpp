@@ -188,14 +188,14 @@ static void listen_error_cb(struct evconnlistener *listener, void *ctx)
     event_base_loopexit(base, NULL);
 }
 
-int create_listen_ports(Config config) {
+int create_listen_ports(Config* config) {
     struct sockaddr_in sin;
     struct evconnlistener* listener;
 
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = htonl(config.m_ip);
-    sin.sin_port = htons(config.m_port);
+    sin.sin_addr.s_addr = htonl(config->ip());
+    sin.sin_port = htons(config->port());
 
     listener = evconnlistener_new_bind(evbase, listen_cb, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
             -1, (struct sockaddr*)&sin, sizeof(sin));
@@ -208,27 +208,14 @@ int create_listen_ports(Config config) {
     return 0;
 }
 
-void ParseConfig(Config* config) {
-    
-}
-
 int main(int argc, char* argv[]) {
-    std::string config_path;
-    Config config;
-
     if (argc != 1) {
         log("ERROR: invalid parameters\n");
         return 1;
     }
 
-    config_path = argv[1];
-    INIReader reader(config_path.c_str());
-    if (reader.ParseError() < 0) {
-        log("Error: open config file failed\n");
-        return 1;
-    }
-    
-    ParseConfig(&config);
+    Config* config = new Config(argv[1]);
+    config->ParseConfig();
 
     /* 
      * Set signal handlers
@@ -243,7 +230,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (create_listen_ports())
+    if (create_listen_ports(config)) {
+        log("ERROR: create server failed\n");
+        return 1;
+    }
 
     event_base_dispatch(evbase);
     return 0;
