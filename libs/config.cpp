@@ -9,11 +9,9 @@ Config::~Config() {
 
 int Config::ParseConfig() {
     if (m_reader->ParseError() < 0) {
-        log("Error: open config file failed\n");
+        fprintf(stderr, "Error: open config file failed\n");
         return 1;
     }
 
     return 0;
 }
-
-

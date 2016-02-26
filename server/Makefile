@@ -1,19 +1,23 @@
 
+PRJ_DIR=/home/yangchunxin/panda
+INCLUDES=-I$(PRJ_DIR)/server -I$(PRJ_DIR)/include -I$(PRJ_DIR)/libs
+LIBS=-levent
 CXX=g++
-CXXFLAGS= -g -Wall -O2 -std=c++0x
-LIBS= -levent
-DEPS= panda.h
-SOURCES=$(wildcard *.cpp)
+CXXFLAGS=-g -Wall -O2 -std=c++0x -c $(INCLUDES)
+SOURCES=$(wildcard $(PRJ_DIR)/*/*.cpp)
 OBJS=$(SOURCES:.cpp=.o)
 EXEC=panda
 
-%.o: %.cpp $(DEPS)
-	$(CXX) -c -o $@ $< $(CFLAGS) $(LIBS)
+.PHONY: clean
 
 $(EXEC): $(OBJS)
-	$(CXX) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CXX) -o $@ $< $(LIBS)
 
-.PHONY: clean
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $< 
+
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -o $@ $< 
 
 clean:
 	rm -rf *.o
